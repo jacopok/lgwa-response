@@ -196,5 +196,5 @@ cython_debug/
 *.npy
 *.yaml
 *.txt
-!src/data/*.npy
-!src/data/*.txt
+!src/lgwa_response/data/*.npy
+!src/lgwa_response/data/*.txt
