@@ -1,0 +1,38 @@
+[project]
+name = "lgwa_response"
+version = "0.1.0"
+description = "A fast implementation of the response of the Lunar Gravitational Wave Antenna, in the time and frequency domains."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "lunarsky>=0.2.1",
+    "matplotlib>=3.9.2",
+    "numba>=0.60.0",
+    "numdifftools>=0.9.41",
+    "numpy>=1.26.4",
+    "bilby>=2.3.0",
+    "tqdm>=4.67.1",
+]
+authors = [
+    { name = "jacopok", email = "jacopok@gmail.com" }
+]
+
+[dependency-groups]
+dev = [
+    {include-group = "test"}
+]
+lint = [
+    "black>=25.9.0",
+]
+test = [
+    "pytest>=8.4.0",
+    "hypothesis>=6.140.2",
+]
+
+[tool.uv]
+default-groups = "all"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
