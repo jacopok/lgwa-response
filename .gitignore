@@ -198,3 +198,5 @@ cython_debug/
 *.txt
 !src/lgwa_response/data/*.npy
 !src/lgwa_response/data/*.txt
+
+src/examples/outdir/*

@@ -15,6 +15,7 @@ from tqdm import tqdm
 import yaml
 from numba import njit, types, float64, complex128, int64
 from pathlib import Path
+import logging
 
 SPEED_OF_LIGHT = 299792458.0
 DETECTOR_LIFETIME = 10 * 3.16e7
@@ -214,7 +215,6 @@ class LunarLikelihood:
 
     def __init__(self, gps_time_range=(788572813.0, 2050876818.0), log_dir=None):
         # 2005 to 2045
-
         self.gps_time_range = gps_time_range
         self.cache_folder = data_path
         self.ensure_ephemeris_are_available()
@@ -384,6 +384,10 @@ class LunarLikelihood:
 
         detector_exists = t_of_f > (parameters["time_at_center"] - DETECTOR_LIFETIME)
 
+        logging.info(
+            f"Detector exists from f >= {f[detector_exists][0]}"
+        )
+        
         cosiota = np.cos(parameters["inclination"])
 
         amplitude[~detector_exists] = 0.0
