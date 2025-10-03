@@ -363,14 +363,20 @@ class LunarLikelihood:
 
     def t_of_f(self, f, parameters):
         amplitude, phase = self.amp_phase(f, parameters)
-        return time_to_merger(f, phase) + parameters["time_at_center"]
+        
+        t_baseline = parameters.pop("time_at_center_baseline", 0.)
+        
+        return time_to_merger(f, phase) + parameters["time_at_center"] + t_baseline
 
     def projected_waveform(self, f, parameters, parameters_for_amp_phase=None):
 
         if parameters_for_amp_phase is None:
             parameters_for_amp_phase = parameters
         amplitude, phase = self.amp_phase(f, parameters_for_amp_phase)
-        t_of_f = time_to_merger(f, phase) + parameters["time_at_center"]
+        
+        t_baseline = parameters.pop("time_at_center_baseline", 0.)
+        
+        t_of_f = time_to_merger(f, phase) + parameters["time_at_center"] + t_baseline
 
         prop_unit_vector = -spherical_to_cartesian(
             parameters["right_ascension"], parameters["declination"]
@@ -382,7 +388,7 @@ class LunarLikelihood:
             + parameters["time_at_center"]
         ) * (2 * np.pi * f)
 
-        detector_exists = t_of_f > (parameters["time_at_center"] - DETECTOR_LIFETIME)
+        detector_exists = t_of_f > (parameters["time_at_center"] + t_baseline - DETECTOR_LIFETIME)
 
         logging.info(
             f"Detector exists from f >= {f[detector_exists][0]}"
