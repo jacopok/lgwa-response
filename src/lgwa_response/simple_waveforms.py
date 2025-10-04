@@ -325,7 +325,9 @@ def from_bilby(parameter_dict):
     eta = q / (1 + q) ** 2
     total_mass = res["chirp_mass"] / eta ** (3 / 5)
     m1 = total_mass * q / (1 + q)
-    m2 = total_mass / (1 + q)
+    
+    # clipping to prevent rounding errors when q=1
+    m2 = np.clip(total_mass / (1 + q), 0, m1)
 
     res["phase"] = parameter_dict["phase"]
     res["luminosity_distance"] = parameter_dict["luminosity_distance"]

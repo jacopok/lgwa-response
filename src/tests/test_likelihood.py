@@ -90,3 +90,27 @@ def test_likelihood_convergence_off_max(injection):
     errors = llmax - llmax[-1]
     # we're using few samples for the test so the accuracy will not be great
     assert np.allclose(errors, 0, atol=5)
+
+def test_detector_exists_nowhere_edge_case():
+    t0 = 1.42087814e+09
+    
+    weird_params = {
+        "chirp_mass": 3.12718176e+01,
+        "mass_ratio": 9.99999999e-01,
+        "luminosity_distance": 2.24819515e+02,
+        "theta_jn": 1.97990526e+00,
+        "psi": 4.43827337e-01,
+        "phase": 1.07711245e+00,
+        "ra": 5.34992216e+00,
+        "dec": -1.86114762e-01,
+        "time_at_center": 7.03045553e-02,
+        "time_at_center_baseline": t0,
+        "chi_1": 0.0569203,
+        "chi_2": 0.01825482,
+        "lambda_1": 0.0,
+        "lambda_2": 0.0,
+    }
+    
+    like = LunarLikelihood()
+    f = np.geomspace(0.15, 3, num=400)
+    like.projected_waveform(f, from_bilby(weird_params))
