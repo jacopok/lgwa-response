@@ -20,7 +20,6 @@ import logging
 SPEED_OF_LIGHT = 299792458.0
 DETECTOR_LIFETIME = 10 * 3.16e7
 
-
 @njit(
     float64[:, :](
         float64[:],
@@ -213,19 +212,43 @@ def noise_weighted_inner_product(aa, bb, power_spectral_density, frequencies):
 
 class LunarLikelihood:
 
-    def __init__(self, gps_time_range=(788572813.0, 2050876818.0), log_dir=None):
-        # 2005 to 2045
+    def __init__(
+        self, 
+        detector_lifetime=DETECTOR_LIFETIME,
+        power_spectral_density_name="LGWA_Si_psd",
+        gps_time_range=(788572813.0, 2050876818.0), 
+        log_dir=None
+        ):
+        """Likelihood for LGWA.
+        
+        Parameters
+        ==========
+        detector_lifetime: float
+            Detector lifetime in seconds
+        power_spectral_density_name: str
+            Name of the power spectral density file. Options: 
+            "LGWA_Si_psd", "LGWA_Nb_psd", "LGWA_Soundcheck_psd"
+        gps_time_range: tuple
+            GPS time range. The default is 2005 to 2045, which 
+            should cover most cases. If you need a different range,
+            the ephemeris are recomputed.
+        log_dir: Path or None
+            Directory for logging relative binning data
+            (and maybe other stuff in the future).
+            If None, use the current directory.
+        """
         self.gps_time_range = gps_time_range
         self.cache_folder = data_path
         self.ensure_ephemeris_are_available()
         self.center = np.asarray([0, 0, 0])[np.newaxis, :]
+        self.detector_lifetime = detector_lifetime
 
         self.data = None
 
         if log_dir is None:
             self.log_dir = Path(".")
 
-        psd_path = data_path / "LGWA_Si_psd.txt"
+        psd_path = (data_path / power_spectral_density_name).with_suffix(".txt")
         self.psd_data = np.loadtxt(psd_path)
 
     def psd(self, f):
@@ -388,7 +411,7 @@ class LunarLikelihood:
             + parameters["time_at_center"]
         ) * (2 * np.pi * f)
 
-        detector_exists = t_of_f > (parameters["time_at_center"] + t_baseline - DETECTOR_LIFETIME)
+        detector_exists = t_of_f > (parameters["time_at_center"] + t_baseline - self.detector_lifetime)
 
         logging.info(
             f"Detector exists from f >= {f[detector_exists][0]}"
