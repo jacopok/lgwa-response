@@ -91,7 +91,9 @@ def test_likelihood_convergence_off_max(injection):
     # we're using few samples for the test so the accuracy will not be great
     assert np.allclose(errors, 0, atol=5)
 
-def test_detector_exists_nowhere_edge_case():
+def test_detector_exists_nowhere_edge_case_q_near_1():
+    # these parameters gave likelihood errors in previous runs
+    
     t0 = 1.42087814e+09    
     mc = 31.27177785
 
@@ -169,3 +171,12 @@ def test_detector_exists_nowhere_edge_case():
     for param in weird_params:
         like.projected_waveform(f, from_bilby(param))
         like.relbin_log_likelihood_ratio(from_bilby(param))
+        
+def test_cached_data():
+    like = LunarLikelihood()
+    times_position =  np.load((like.cache_folder / "times_position").with_suffix(".npy"))
+    times_response =  np.load((like.cache_folder / "times_response").with_suffix(".npy"))
+    
+    for t in (times_position, times_response):
+        assert t[0] < 8e8 # before May 2005
+        assert t[-1] > 2e9 # after May 2043
