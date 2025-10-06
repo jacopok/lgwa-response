@@ -19,10 +19,8 @@ authors = [
 
 [dependency-groups]
 dev = [
-    {include-group = "test"}
-]
-lint = [
-    "black>=25.9.0",
+    {include-group = "test"},
+    "ipython>=9.6.0",
 ]
 test = [
     "pytest>=8.4.0",
