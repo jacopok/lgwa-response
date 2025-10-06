@@ -232,7 +232,7 @@ class LunarLikelihood:
             GPS time range. The default is 2005 to 2045, which 
             should cover most cases. If you need a different range,
             the ephemeris are recomputed.
-        log_dir: Path or None
+        log_dir: Path, str or None
             Directory for logging relative binning data
             (and maybe other stuff in the future).
             If None, use the current directory.
@@ -247,6 +247,8 @@ class LunarLikelihood:
 
         if log_dir is None:
             self.log_dir = Path(".")
+        else:
+            self.log_dir = Path(log_dir)
 
         psd_path = (data_path / power_spectral_density_name).with_suffix(".txt")
         self.psd_data = np.loadtxt(psd_path)
