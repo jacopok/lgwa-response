@@ -335,7 +335,7 @@ class LunarLikelihood:
     def amp_phase(self, f, parameters):
         q = parameters["mass_ratio"]
         q = max(q, 1 / q)
-        eta = q / (1 + q) ** 2
+        eta = np.clip(q / (1 + q) ** 2, 0, 0.25)
 
         total_mass = parameters["chirp_mass"] / eta ** (3 / 5)
 
