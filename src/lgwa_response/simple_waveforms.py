@@ -332,6 +332,7 @@ def from_bilby(parameter_dict):
     res["phase"] = parameter_dict["phase"]
     res["luminosity_distance"] = parameter_dict["luminosity_distance"]
     res["time_at_center"] = parameter_dict["time_at_center"]
+    res["time_at_center_baseline"] = parameter_dict["time_at_center_baseline"]
 
     res["right_ascension"] = float(parameter_dict["ra"])
     res["declination"] = float(parameter_dict["dec"])
