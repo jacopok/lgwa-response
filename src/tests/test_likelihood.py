@@ -92,9 +92,27 @@ def test_likelihood_convergence_off_max(injection):
     assert np.allclose(errors, 0, atol=5)
 
 def test_detector_exists_nowhere_edge_case():
-    t0 = 1.42087814e+09
+    t0 = 1.42087814e+09    
+    mc = 31.27177785
+
+    injection_params = {
+    "chirp_mass": mc,
+    "mass_ratio": 0.97828418,
+    "luminosity_distance": 413.79263441,
+    "theta_jn": 0.71793531,
+    "psi": 1.32899451,
+    "phase": 1.5664732,
+    "ra": 2.33323452,
+    "dec": 0.19024356,
+    "time_at_center": 0,
+    "time_at_center_baseline": t0,
+    "chi_1": 0.0569203,
+    "chi_2": 0.01825482,
+    "lambda_1": 0.0,
+    "lambda_2": 0.0,
+    }
     
-    weird_params = {
+    weird_params = [{
         "chirp_mass": 3.12718176e+01,
         "mass_ratio": 9.99999999e-01,
         "luminosity_distance": 2.24819515e+02,
@@ -109,8 +127,45 @@ def test_detector_exists_nowhere_edge_case():
         "chi_2": 0.01825482,
         "lambda_1": 0.0,
         "lambda_2": 0.0,
+    },
+    {
+        "chirp_mass": 3.12717981e+01,
+        "mass_ratio": 9.99999999e-01,
+        "luminosity_distance": 4.96809788e+02,
+        "theta_jn": 1.29917807e+00,
+        "psi": 6.61506004e-01,
+        "phase": 3.05986641e+00,
+        "ra": 2.11695218e+00,
+        "dec": -6.62047343e-03,
+        "time_at_center": 1.58576570e+01,
+        "time_at_center_baseline": t0,
+        "chi_1": 0.0569203,
+        "chi_2": 0.01825482,
+        "lambda_1": 0.0,
+        "lambda_2": 0.0,
+    },
+    {
+        "chirp_mass": 3.12717718e+01,
+        "mass_ratio": 9.99999989e-01,
+        "luminosity_distance": 6.38652691e+02,
+        "theta_jn": 2.53061975e+00,
+        "psi": 9.49684955e-02,
+        "phase": 4.50127937e+00,
+        "ra": 2.45350809e+00,
+        "dec": 1.20834395e-01,
+        "time_at_center": -1.48847994e+01,
+        "time_at_center_baseline": t0,
+        "chi_1": 0.0569203,
+        "chi_2": 0.01825482,
+        "lambda_1": 0.0,
+        "lambda_2": 0.0,
     }
+    ]
     
     like = LunarLikelihood()
-    f = np.geomspace(0.15, 3, num=400)
-    like.projected_waveform(f, from_bilby(weird_params))
+    f = np.geomspace(0.15, 3, num=40)
+    like.make_relbin_data(f, from_bilby(injection_params))
+    
+    for param in weird_params:
+        like.projected_waveform(f, from_bilby(param))
+        like.relbin_log_likelihood_ratio(from_bilby(param))
