@@ -174,8 +174,8 @@ def test_detector_exists_nowhere_edge_case_q_near_1():
         
 def test_cached_data():
     like = LunarLikelihood()
-    times_position =  np.load((like.cache_folder / "times_position").with_suffix(".npy"))
-    times_response =  np.load((like.cache_folder / "times_response").with_suffix(".npy"))
+    times_position =  np.load((like.cache_folder / "times_position").with_suffix(".npy"), allow_pickle=True)
+    times_response =  np.load((like.cache_folder / "times_response").with_suffix(".npy"), allow_pickle=True)
     
     for t in (times_position, times_response):
         assert t[0] < 8e8 # before May 2005

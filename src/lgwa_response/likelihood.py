@@ -337,23 +337,23 @@ class LunarLikelihood:
         )
 
         if self.fname_data_position.exists() and self.fname_times_position.exists():
-            self.times_position = np.load(self.fname_times_position)
+            self.times_position = np.load(self.fname_times_position, allow_pickle=True)
             if (self.times_position[0] > self.gps_time_range[0]) or (
                 self.times_position[-1] < self.gps_time_range[1]
             ):
 
                 self.compute_position_interpolant()
-            self.data_position = np.load(self.fname_data_position)
+            self.data_position = np.load(self.fname_data_position, allow_pickle=True)
         else:
             self.compute_position_interpolant()
 
         if self.fname_data_response.exists() and self.fname_times_response.exists():
-            self.times_response = np.load(self.fname_times_response)
+            self.times_response = np.load(self.fname_times_response, allow_pickle=True)
             if (self.times_response[0] > self.gps_time_range[0]) or (
                 self.times_response[-1] < self.gps_time_range[1]
             ):
                 self.compute_response_interpolant()
-            self.data_response = np.load(self.fname_data_response)
+            self.data_response = np.load(self.fname_data_response, allow_pickle=True)
         else:
             self.compute_response_interpolant()
 
@@ -499,7 +499,7 @@ class LunarLikelihood:
                 parameters_are_identical = False
 
             if parameters_are_identical:
-                self.relbin_summary_data = np.load(fname_data)
+                self.relbin_summary_data = np.load(fname_data, allow_pickle=True)
                 self.set_reference_waveform(frequency_grid, parameters_h0)
 
                 return
