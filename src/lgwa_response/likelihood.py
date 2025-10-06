@@ -389,7 +389,7 @@ class LunarLikelihood:
     def t_of_f(self, f, parameters):
         amplitude, phase = self.amp_phase(f, parameters)
         
-        t_baseline = parameters.pop("time_at_center_baseline", 0.)
+        t_baseline = parameters.get("time_at_center_baseline", 0.)
         
         return time_to_merger(f, phase) + parameters["time_at_center"] + t_baseline
 
@@ -399,7 +399,7 @@ class LunarLikelihood:
             parameters_for_amp_phase = parameters
         amplitude, phase = self.amp_phase(f, parameters_for_amp_phase)
         
-        t_baseline = parameters.pop("time_at_center_baseline", 0.)
+        t_baseline = parameters.get("time_at_center_baseline", 0.)
         
         t_of_f = time_to_merger(f, phase) + parameters["time_at_center"] + t_baseline
 
