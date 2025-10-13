@@ -10,11 +10,6 @@ from numba import njit
 
 from . import data_path, lgwa_settings
 
-LOCATION = MoonLocation.from_selenodetic(
-    lon=lgwa_settings.LONGITUDE, lat=lgwa_settings.LATITUDE
-)
-
-
 def wave_frame_basis_cartesian(source_ra, source_dec, polarization_angle):
     theta = np.pi / 2.0 - source_dec
     phi = source_ra
@@ -62,8 +57,8 @@ def get_orthonormal_vectors(topo):
     )
 
 
-def get_detector_position(time):
-    body = LOCATION.get_mcmf(time).transform_to(ICRS())
+def get_detector_position(time, location):
+    body = location.get_mcmf(time).transform_to(ICRS())
     body.representation_type = "cartesian"
 
     return np.squeeze(
@@ -72,14 +67,18 @@ def get_detector_position(time):
 
 
 def generate_data_response(
-    n_points, gps_time_start=1577491218.0, gps_time_end=1893024018.0
+    n_points, lgwa_position, gps_time_start=1577491218.0, gps_time_end=1893024018.0
 ):
     # 2030 to 2040
     times = Time(np.linspace(gps_time_start, gps_time_end, num=n_points), format="gps")
 
+    location = MoonLocation.from_selenodetic(
+        lon=lgwa_position['longitude'], lat=lgwa_position['latitude']
+    )
+
     saved_data = np.empty((n_points, 6))
     for i, time in tqdm(enumerate(times)):
-        topo = LunarTopo(obstime=time, location=LOCATION)
+        topo = LunarTopo(obstime=time, location=location)
         saved_data[i, :] = get_orthonormal_vectors(topo)
 
     for j in range(6):
@@ -89,14 +88,18 @@ def generate_data_response(
 
 
 def generate_data_position(
-    n_points, gps_time_start=1577491218.0, gps_time_end=1893024018.0
+    n_points, lgwa_position, gps_time_start=1577491218.0, gps_time_end=1893024018.0,
 ):
     # 2030 to 2040
     times = Time(np.linspace(gps_time_start, gps_time_end, num=n_points), format="gps")
 
+    location = MoonLocation.from_selenodetic(
+        lon=lgwa_position['longitude'], lat=lgwa_position['latitude']
+    )
+    
     saved_data = np.empty((n_points, 3))
     for i, time in tqdm(enumerate(times)):
-        saved_data[i, :] = get_detector_position(time)
+        saved_data[i, :] = get_detector_position(time, location)
 
     return times.value, saved_data
 

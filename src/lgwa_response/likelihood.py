@@ -16,6 +16,7 @@ import yaml
 from numba import njit, types, float64, complex128, int64
 from pathlib import Path
 import logging
+from bilby.core.utils import check_directory_exists_and_if_not_mkdir
 
 SPEED_OF_LIGHT = 299792458.0
 DETECTOR_LIFETIME = 10 * 3.16e7
@@ -211,6 +212,7 @@ class LunarLikelihood:
         gps_time_range=(788572813.0, 2050876818.0),
         log_dir_relative_binning=None,
         log_dir_ephemeris=None,
+        lgwa_position=None,
     ):
         """Likelihood for LGWA.
 
@@ -226,14 +228,39 @@ class LunarLikelihood:
             should cover most cases. If you need a different range,
             the ephemeris are recomputed.
         log_dir_relative_binning: Path, str or None
-            Directory for logging relative binning data
-            (and maybe other stuff in the future).
+            Directory for saving relative binning data
             If None, use the current directory.
+        log_dir_ephemeris: Path, str or None
+            Directory for saving ephemeris data
+            If None, use the data folder from the package.
+            This allows for the usage of the ephemeris data 
+            provided with the package.
+        lgwa_position: dict or None
+            Position of the LGWA, expressed as lunar longitude and latitude, 
+            in degrees.
         """
         self.gps_time_range = gps_time_range
 
-        # folder for caching ephemeris
-        self.cache_folder = data_path
+        if log_dir_ephemeris is None:
+            self.cache_folder = data_path
+        else:
+            self.cache_folder = Path(log_dir_ephemeris)
+        check_directory_exists_and_if_not_mkdir(self.cache_folder)
+
+        if lgwa_position is None:
+            with open(self.fname_lgwa_meta, "r") as f:
+                lgwa_meta = yaml.safe_load(f)
+                self.lgwa_position = lgwa_meta
+                
+        else:
+            with open(self.fname_lgwa_meta, "w") as f:
+                yaml.dump(
+                    lgwa_position,
+                    f,
+                )
+
+            self.lgwa_position = lgwa_position
+
 
         self.ensure_ephemeris_are_available()
         self.center = np.asarray([0, 0, 0])[np.newaxis, :]
@@ -245,9 +272,11 @@ class LunarLikelihood:
             self.log_dir = Path(".")
         else:
             self.log_dir = Path(log_dir_relative_binning)
+        check_directory_exists_and_if_not_mkdir(self.log_dir)
 
         psd_path = (data_path / power_spectral_density_name).with_suffix(".txt")
         self.psd_data = np.loadtxt(psd_path)
+        
 
     def psd(self, f):
         return np.interp(f, self.psd_data[:, 0], self.psd_data[:, 1] / 2.0)
@@ -298,7 +327,7 @@ class LunarLikelihood:
         gps_time_range = self.gps_time_range + np.array([-1e5, 1e5])
         n_points_position = int((gps_time_range[1] - gps_time_range[0]) / (60 * 10))
         self.times_position, self.data_position = generate_data_position(
-            n_points_position, *gps_time_range
+            n_points_position, self.lgwa_position, *gps_time_range
         )
         np.save(self.fname_times_position, self.times_position)
         np.save(self.fname_data_position, self.data_position)
@@ -309,7 +338,7 @@ class LunarLikelihood:
         gps_time_range = self.gps_time_range + np.array([-1e5, 1e5])
         n_points_response = int((gps_time_range[1] - gps_time_range[0]) / (60 * 200))
         self.times_response, self.data_response = generate_data_response(
-            n_points_response, *gps_time_range
+            n_points_response, self.lgwa_position, *gps_time_range
         )
 
         np.save(self.fname_times_response, self.times_response)
