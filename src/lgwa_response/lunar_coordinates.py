@@ -74,7 +74,6 @@ def get_detector_position(time):
 def generate_data_response(
     n_points, gps_time_start=1577491218.0, gps_time_end=1893024018.0
 ):
-
     # 2030 to 2040
     times = Time(np.linspace(gps_time_start, gps_time_end, num=n_points), format="gps")
 
@@ -92,7 +91,6 @@ def generate_data_response(
 def generate_data_position(
     n_points, gps_time_start=1577491218.0, gps_time_end=1893024018.0
 ):
-
     # 2030 to 2040
     times = Time(np.linspace(gps_time_start, gps_time_end, num=n_points), format="gps")
 
@@ -104,7 +102,6 @@ def generate_data_position(
 
 
 def test_interpolation_error_response(dataset_sizes):
-
     rng = np.random.default_rng(seed=1)
 
     all_errors = []
@@ -139,7 +136,6 @@ def test_interpolation_error_response(dataset_sizes):
 
 
 def test_interpolation_error_position(dataset_sizes):
-
     rng = np.random.default_rng(seed=1)
 
     all_errors = []
@@ -165,7 +161,6 @@ def test_interpolation_error_position(dataset_sizes):
 
 
 def make_response_interpolation_plot():
-
     dataset_sizes = [1250, 2500, 5000, 10_000, 20_000]
     file_path = (
         data_path
@@ -240,7 +235,6 @@ def make_response_interpolation_plot():
 
 
 def make_position_interpolation_plot():
-
     dataset_sizes = [10_000, 20_000, 40_000, 80_000, 160_000, 320_000]
     file_path = (
         data_path

@@ -303,7 +303,6 @@ def time_to_merger(f, phase):
 
 
 def time_to_merger_simple(f, mchirp):
-
     return -5.0 / (256.0 * np.pi ** (8 / 3)) / mchirp ** (5 / 3) / f ** (8 / 3)
 
 
@@ -315,7 +314,6 @@ def time_to_merger_simple_inverse(t, mchirp):
 
 
 def from_bilby(parameter_dict):
-
     res = {}
 
     res["chirp_mass"] = parameter_dict["chirp_mass"]
@@ -325,14 +323,14 @@ def from_bilby(parameter_dict):
     eta = q / (1 + q) ** 2
     total_mass = res["chirp_mass"] / eta ** (3 / 5)
     m1 = total_mass * q / (1 + q)
-    
+
     # clipping to prevent rounding errors when q=1
     m2 = np.clip(total_mass / (1 + q), 0, m1)
 
     res["phase"] = parameter_dict["phase"]
     res["luminosity_distance"] = parameter_dict["luminosity_distance"]
     res["time_at_center"] = parameter_dict["time_at_center"]
-    res["time_at_center_baseline"] = parameter_dict["time_at_center_baseline"]
+    res["time_at_center_baseline"] = parameter_dict.get("time_at_center_baseline", 0.)
 
     res["right_ascension"] = float(parameter_dict["ra"])
     res["declination"] = float(parameter_dict["dec"])

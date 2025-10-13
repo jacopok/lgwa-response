@@ -70,7 +70,6 @@ def test_orthonormality_detector_frame(gps_time):
     st.floats(-np.pi / 2, np.pi / 2.0),
 )
 def test_spherical_cartesian_conventions(ra, dec):
-
     their_definition = spherical_to_cartesian(ra, dec)
 
     explicit_definition = np.asarray(

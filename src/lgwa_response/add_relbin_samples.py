@@ -3,9 +3,7 @@ from .likelihood import LunarLikelihood, noise_weighted_inner_product
 
 
 class LunarLikelihoodAddingSamples(LunarLikelihood):
-
     def add_relbin_frequency(self, i_bin, n_local_grid=2**10):
-
         f1, f2 = self.relbin_frequencies[i_bin], self.relbin_frequencies[i_bin + 1]
 
         f_mid = (f1 + f2) / 2.0
@@ -29,7 +27,6 @@ class LunarLikelihoodAddingSamples(LunarLikelihood):
             local_psd = self.psd(local_grid)
             local_h0 = self.projected_waveform(local_grid, self.h0_parameters)
             for channel in range(2):
-
                 A0 = noise_weighted_inner_product(
                     local_h0[channel], local_h0[channel], local_psd, local_grid
                 )

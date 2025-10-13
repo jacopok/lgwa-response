@@ -18,10 +18,16 @@ likelihood = LunarLikelihoodBilbyInjection()
 likelihood.compute_center(injection_params["time_at_center"])
 likelihood.make_relbin_data(freqs, from_bilby(injection_params))
 
-result = Result.from_json(outdir + '/two_parameter_regression_result.json')
+result = Result.from_json(outdir + "/two_parameter_regression_result.json")
 
-ln_weights, new_log_likelihood_array, new_log_prior_array, old_log_likelihood_array, old_log_prior_array = get_weights_for_reweighting(result, new_likelihood=likelihood, new_prior=priors)
+(
+    ln_weights,
+    new_log_likelihood_array,
+    new_log_prior_array,
+    old_log_likelihood_array,
+    old_log_prior_array,
+) = get_weights_for_reweighting(result, new_likelihood=likelihood, new_prior=priors)
 
-w = np.exp(ln_weights - ln_weights.max()) 
+w = np.exp(ln_weights - ln_weights.max())
 
-print(f'Sample efficiency: {w.sum()**2 / (w**2).sum() / len(w)}')
+print(f"Sample efficiency: {w.sum()**2 / (w**2).sum() / len(w)}")

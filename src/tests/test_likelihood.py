@@ -51,7 +51,6 @@ def test_grid_refine_grid(injection):
 
 
 def test_likelihood_convergence_max(injection):
-
     fmin, fmax = 0.1, 4
     like = LunarLikelihood()
 
@@ -71,7 +70,6 @@ def test_likelihood_convergence_max(injection):
 
 
 def test_likelihood_convergence_off_max(injection):
-
     fmin, fmax = 0.5, 4
     like = LunarLikelihood()
 
@@ -91,92 +89,95 @@ def test_likelihood_convergence_off_max(injection):
     # we're using few samples for the test so the accuracy will not be great
     assert np.allclose(errors, 0, atol=5)
 
+
 def test_detector_exists_nowhere_edge_case_q_near_1():
     # these parameters gave likelihood errors in previous runs
-    
-    t0 = 1.42087814e+09    
+
+    t0 = 1.42087814e09
     mc = 31.27177785
 
     injection_params = {
-    "chirp_mass": mc,
-    "mass_ratio": 0.97828418,
-    "luminosity_distance": 413.79263441,
-    "theta_jn": 0.71793531,
-    "psi": 1.32899451,
-    "phase": 1.5664732,
-    "ra": 2.33323452,
-    "dec": 0.19024356,
-    "time_at_center": 0,
-    "time_at_center_baseline": t0,
-    "chi_1": 0.0569203,
-    "chi_2": 0.01825482,
-    "lambda_1": 0.0,
-    "lambda_2": 0.0,
-    }
-    
-    weird_params = [{
-        "chirp_mass": 3.12718176e+01,
-        "mass_ratio": 9.99999999e-01,
-        "luminosity_distance": 2.24819515e+02,
-        "theta_jn": 1.97990526e+00,
-        "psi": 4.43827337e-01,
-        "phase": 1.07711245e+00,
-        "ra": 5.34992216e+00,
-        "dec": -1.86114762e-01,
-        "time_at_center": 7.03045553e-02,
-        "time_at_center_baseline": t0,
-        "chi_1": 0.0569203,
-        "chi_2": 0.01825482,
-        "lambda_1": 0.0,
-        "lambda_2": 0.0,
-    },
-    {
-        "chirp_mass": 3.12717981e+01,
-        "mass_ratio": 9.99999999e-01,
-        "luminosity_distance": 4.96809788e+02,
-        "theta_jn": 1.29917807e+00,
-        "psi": 6.61506004e-01,
-        "phase": 3.05986641e+00,
-        "ra": 2.11695218e+00,
-        "dec": -6.62047343e-03,
-        "time_at_center": 1.58576570e+01,
-        "time_at_center_baseline": t0,
-        "chi_1": 0.0569203,
-        "chi_2": 0.01825482,
-        "lambda_1": 0.0,
-        "lambda_2": 0.0,
-    },
-    {
-        "chirp_mass": 3.12717718e+01,
-        "mass_ratio": 9.99999989e-01,
-        "luminosity_distance": 6.38652691e+02,
-        "theta_jn": 2.53061975e+00,
-        "psi": 9.49684955e-02,
-        "phase": 4.50127937e+00,
-        "ra": 2.45350809e+00,
-        "dec": 1.20834395e-01,
-        "time_at_center": -1.48847994e+01,
+        "chirp_mass": mc,
+        "mass_ratio": 0.97828418,
+        "luminosity_distance": 413.79263441,
+        "theta_jn": 0.71793531,
+        "psi": 1.32899451,
+        "phase": 1.5664732,
+        "ra": 2.33323452,
+        "dec": 0.19024356,
+        "time_at_center": 0,
         "time_at_center_baseline": t0,
         "chi_1": 0.0569203,
         "chi_2": 0.01825482,
         "lambda_1": 0.0,
         "lambda_2": 0.0,
     }
+
+    weird_params = [
+        {
+            "chirp_mass": 3.12718176e01,
+            "mass_ratio": 9.99999999e-01,
+            "luminosity_distance": 2.24819515e02,
+            "theta_jn": 1.97990526e00,
+            "psi": 4.43827337e-01,
+            "phase": 1.07711245e00,
+            "ra": 5.34992216e00,
+            "dec": -1.86114762e-01,
+            "time_at_center": 7.03045553e-02,
+            "time_at_center_baseline": t0,
+            "chi_1": 0.0569203,
+            "chi_2": 0.01825482,
+            "lambda_1": 0.0,
+            "lambda_2": 0.0,
+        },
+        {
+            "chirp_mass": 3.12717981e01,
+            "mass_ratio": 9.99999999e-01,
+            "luminosity_distance": 4.96809788e02,
+            "theta_jn": 1.29917807e00,
+            "psi": 6.61506004e-01,
+            "phase": 3.05986641e00,
+            "ra": 2.11695218e00,
+            "dec": -6.62047343e-03,
+            "time_at_center": 1.58576570e01,
+            "time_at_center_baseline": t0,
+            "chi_1": 0.0569203,
+            "chi_2": 0.01825482,
+            "lambda_1": 0.0,
+            "lambda_2": 0.0,
+        },
+        {
+            "chirp_mass": 3.12717718e01,
+            "mass_ratio": 9.99999989e-01,
+            "luminosity_distance": 6.38652691e02,
+            "theta_jn": 2.53061975e00,
+            "psi": 9.49684955e-02,
+            "phase": 4.50127937e00,
+            "ra": 2.45350809e00,
+            "dec": 1.20834395e-01,
+            "time_at_center": -1.48847994e01,
+            "time_at_center_baseline": t0,
+            "chi_1": 0.0569203,
+            "chi_2": 0.01825482,
+            "lambda_1": 0.0,
+            "lambda_2": 0.0,
+        },
     ]
-    
+
     like = LunarLikelihood()
     f = np.geomspace(0.15, 3, num=40)
     like.make_relbin_data(f, from_bilby(injection_params))
-    
+
     for param in weird_params:
         like.projected_waveform(f, from_bilby(param))
         like.relbin_log_likelihood_ratio(from_bilby(param))
-        
+
+
 def test_cached_data():
     like = LunarLikelihood()
-    times_position =  np.load((like.cache_folder / "times_position").with_suffix(".npy"), allow_pickle=True)
-    times_response =  np.load((like.cache_folder / "times_response").with_suffix(".npy"), allow_pickle=True)
-    
+    times_position = np.load(like.fname_times_position)
+    times_response = np.load(like.fname_times_response)
+
     for t in (times_position, times_response):
-        assert t[0] < 8e8 # before May 2005
-        assert t[-1] > 2e9 # after May 2043
+        assert t[0] < 8e8  # before May 2005
+        assert t[-1] > 2e9  # after May 2043
