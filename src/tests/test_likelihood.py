@@ -181,3 +181,10 @@ def test_cached_data():
     for t in (times_position, times_response):
         assert t[0] < 8e8  # before May 2005
         assert t[-1] > 2e9  # after May 2043
+
+def test_likelihood_different_position():
+    like = LunarLikelihood(
+        log_dir_ephemeris='test_position_change',
+        lgwa_position=(0., -87.5),
+        gps_time_range=(1e9, 1e9+1e6),
+    )
