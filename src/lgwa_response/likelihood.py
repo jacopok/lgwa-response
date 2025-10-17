@@ -295,7 +295,7 @@ class LunarLikelihood:
     def get_antenna_response(self, time, ra, dec, psi):
         n, x, y = self.get_detector_frame(time)
 
-        u, v = wave_frame_basis_cartesian(ra, dec, psi)
+        u, v = wave_frame_basis_cartesian(ra, dec, - psi)
 
         un = np.dot(n, u)
         ux = np.dot(x, u)
@@ -450,7 +450,7 @@ class LunarLikelihood:
 
         amplitude[~detector_exists] = 0.0
 
-        total_phase = phase - delay_phase + parameters["phase"]
+        total_phase = phase + delay_phase + parameters["phase"]
 
         h_plus = amplitude * 0.5 * (1 + cosiota**2) * np.exp(1j * (total_phase))
         h_cross = amplitude * cosiota * np.exp(1j * (total_phase + np.pi / 2))
