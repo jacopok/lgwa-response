@@ -251,7 +251,7 @@ class LunarLikelihood:
             with open(self.fname_lgwa_meta, "r") as f:
                 lgwa_meta = yaml.safe_load(f)
                 self.lgwa_position = lgwa_meta
-                
+        
         else:
             with open(self.fname_lgwa_meta, "w") as f:
                 yaml.dump(
@@ -365,6 +365,18 @@ class LunarLikelihood:
         return (self.cache_folder / "lgwa_metadata").with_suffix(".yaml")
 
     def ensure_ephemeris_are_available(self):
+        
+        with open(self.fname_lgwa_meta, "r") as f:
+            saved_lgwa_meta = yaml.safe_load(f)
+            
+            for key, value in saved_lgwa_meta.items():
+                if not np.isclose(value, self.lgwa_position[key]):
+                    logging.info(f"Saved LGWA {key} changed from {value} to {self.lgwa_position[key]}, recomputing interpolants.")
+                    self.compute_position_interpolant()
+                    self.compute_response_interpolant()
+                    return
+
+        
         if self.fname_data_position.exists() and self.fname_times_position.exists():
             self.times_position = np.load(self.fname_times_position)
             if (self.times_position[0] > self.gps_time_range[0]) or (
