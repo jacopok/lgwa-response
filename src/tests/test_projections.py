@@ -1,7 +1,6 @@
 from lgwa_response.lunar_coordinates import (
     wave_frame_basis_cartesian,
     spherical_to_cartesian,
-    LOCATION,
     get_orthonormal_vectors,
     scalar_product_spherical,
 )
@@ -50,7 +49,11 @@ def test_psi_rotation(ra, dec, psi):
 )
 def test_orthonormality_detector_frame(gps_time):
     time = Time(gps_time, format="gps")
-    topo = LunarTopo(obstime=time, location=LOCATION)
+    location = MoonLocation.from_selenodetic(
+        lat=-88.5, 
+        lon=15.
+    )
+    topo = LunarTopo(obstime=time, location=location)
     n_ra, n_dec, x_ra, x_dec, y_ra, y_dec = get_orthonormal_vectors(topo)
 
     n = spherical_to_cartesian(n_ra, n_dec)

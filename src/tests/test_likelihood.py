@@ -185,6 +185,10 @@ def test_cached_data():
 def test_likelihood_different_position():
     like = LunarLikelihood(
         log_dir_ephemeris='test_position_change',
-        lgwa_position=(0., -87.5),
+        lgwa_position={
+            'lon': 0., 
+            'lat': -87.5,
+            'azimuth': 40.,
+            },
         gps_time_range=(1e9, 1e9+1e6),
     )
