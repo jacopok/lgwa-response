@@ -20,7 +20,9 @@ authors = [
 [dependency-groups]
 dev = [
     {include-group = "test"},
+    "healpy>=1.18.1",
     "ipython>=9.6.0",
+    "pyqt6>=6.9.1",
 ]
 test = [
     "pytest>=8.4.0",

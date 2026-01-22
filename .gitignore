@@ -200,3 +200,5 @@ cython_debug/
 !src/lgwa_response/data/*.txt
 
 src/examples/outdir/*
+
+*.png
