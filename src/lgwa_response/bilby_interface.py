@@ -23,13 +23,22 @@ DEFAULT_PARAMS = {
 class LunarLikelihoodBilbyInjection(LunarLikelihood, bilby.core.likelihood.Likelihood):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
+        self.phase_marginalization = kwargs.pop('phase_marginalization', False)
+        
         bilby.core.likelihood.Likelihood.__init__(self, parameters=DEFAULT_PARAMS)
 
     def log_likelihood_ratio(self):
-        return self.relbin_log_likelihood_ratio(from_bilby(self.parameters))
+        if self.phase_marginalization:
+            return self.relbin_log_likelihood_ratio_phase_marginalized(from_bilby(self.parameters))
+        else:
+            return self.relbin_log_likelihood_ratio(from_bilby(self.parameters))
 
     def log_likelihood(self):
-        return self.relbin_log_likelihood_ratio(from_bilby(self.parameters))
+        if self.phase_marginalization:
+            return self.relbin_log_likelihood_ratio_phase_marginalized(from_bilby(self.parameters))
+        else:
+            return self.relbin_log_likelihood_ratio(from_bilby(self.parameters))
 
     def noise_log_likelihood(self):
         return 0.0
