@@ -17,10 +17,17 @@ from numba import njit, types, float64, complex128, int64
 from pathlib import Path
 import logging
 from bilby.core.utils import check_directory_exists_and_if_not_mkdir
+from scipy.special import i0e, i0
 
 SPEED_OF_LIGHT = 299792458.0
 DETECTOR_LIFETIME = 10 * 3.16e7
 
+
+def ln_i0(value):
+    """
+    From bilby.
+    """
+    return np.log(i0e(value)) + np.abs(value)
 
 @njit(
     float64[:, :](
@@ -67,8 +74,8 @@ def interpolate_detector_frame(times, stored_times, stored_response):
     )
 )
 def relbin_log_likelihood_kernel(r0, r1, summary_data):
-    ll_total = 0
-    for channel in range(2):
+    ll_total = 0.
+    for channel in range(summary_data.shape[0]):
         for i_bin in range(summary_data.shape[1]):
             ll_hd = np.real(
                 summary_data[channel, i_bin, 0] * np.conj(r0[channel, i_bin])
@@ -86,6 +93,50 @@ def relbin_log_likelihood_kernel(r0, r1, summary_data):
 
     return ll_total
 
+@njit(
+    complex128[:](
+        complex128[:, :],
+        complex128[:, :],
+        complex128[:, :, :],
+    )
+)
+def relbin_log_likelihood_kernel_d_inner_h(r0, r1, summary_data):
+    
+    d_inner_h = np.empty(summary_data.shape[0], dtype=complex128)
+    
+    for channel in range(summary_data.shape[0]):
+        
+        d_inner_h[channel] = 0.+0.j
+        
+        for i_bin in range(summary_data.shape[1]):
+            d_inner_h[channel] += (
+                summary_data[channel, i_bin, 0] * np.conj(r0[channel, i_bin])
+                + summary_data[channel, i_bin, 1] * np.conj(r1[channel, i_bin])
+            )
+            
+    return d_inner_h
+
+@njit(
+    float64[:](
+        complex128[:, :],
+        complex128[:, :],
+        complex128[:, :, :],
+    )
+)
+def relbin_log_likelihood_kernel_h_inner_h(r0, r1, summary_data):
+    h_inner_h = np.empty(summary_data.shape[0])
+    for channel in range(summary_data.shape[0]):
+        h_inner_h[channel] = 0.
+        for i_bin in range(summary_data.shape[1]):
+
+            h_inner_h[channel] += np.real(
+                summary_data[channel, i_bin, 2] * np.abs(r0[channel, i_bin]) ** 2
+                + 2
+                * summary_data[channel, i_bin, 3]
+                * np.real(r0[channel, i_bin] * np.conj(r1[channel, i_bin]))
+            )
+
+    return h_inner_h
 
 @njit(
     types.Tuple((float64, int64[:]))(
@@ -592,6 +643,30 @@ class LunarLikelihood:
         return relbin_log_likelihood_kernel(
             r0, r1, np.asarray(summary_data, dtype=complex)
         )
+    
+    def relbin_log_likelihood_ratio_phase_marginalized(self, parameters):
+        
+        f_bin = self.relbin_frequencies
+
+        r_bin = self.projected_waveform(f_bin, parameters) / self.h0_bin
+
+        bin_widths = self.bin_widths
+        r0 = (r_bin[:, 1:] + r_bin[:, :-1]) / 2.0
+        r1 = (r_bin[:, 1:] - r_bin[:, :-1]) / bin_widths[np.newaxis, :]
+
+        # self.relbin_summary_data has shape [n_channels, n_freqs-1, 4]
+        # the last axis contains A0, A1, B0, B1 in this order
+
+        summary_data = self.relbin_summary_data
+        
+        d_inner_h = relbin_log_likelihood_kernel_d_inner_h(
+            r0, r1, np.asarray(summary_data, dtype=complex))
+        h_inner_h = relbin_log_likelihood_kernel_h_inner_h(
+            r0, r1, np.asarray(summary_data, dtype=complex))
+
+        ll_total = ln_i0(abs(d_inner_h.sum())) - 0.5 * h_inner_h.sum()
+        
+        return ll_total
 
     def optimal_snr(self, f, parameters):
         h = self.projected_waveform(f, parameters)
