@@ -513,7 +513,7 @@ class LunarLikelihood:
 
         amplitude[~detector_exists] = 0.0
 
-        total_phase = phase + delay_phase + parameters["phase"]
+        total_phase = phase - delay_phase + parameters["phase"]
 
         h_plus = amplitude * 0.5 * (1 + cosiota**2) * np.exp(1j * (total_phase))
         h_cross = amplitude * cosiota * np.exp(1j * (total_phase + np.pi / 2))
@@ -671,6 +671,27 @@ class LunarLikelihood:
     def optimal_snr(self, f, parameters):
         h = self.projected_waveform(f, parameters)
         return np.sqrt(noise_weighted_inner_product(h, h, self.psd(f), f).sum())
+
+    def mean_square_frequency_snr(self, f, parameters):
+        h = self.projected_waveform(f, parameters)
+        return noise_weighted_inner_product(h*f, h*f, self.psd(f), f).sum()
+    
+    def frequency_moment(self, f, parameters, order=1):
+        h = self.projected_waveform(f, parameters)
+        norm = noise_weighted_inner_product(h, h, self.psd(f), f).sum()
+        
+        return noise_weighted_inner_product(h, h*f**order, self.psd(f), f).sum() / norm
+
+    def expected_timing_uncertainty(self, f, parameters):
+        h = self.projected_waveform(f, parameters)
+        snr = np.sqrt(noise_weighted_inner_product(h, h, self.psd(f), f).sum())
+        avg_f = self.frequency_moment(f, parameters, 1)
+        avg_f_square = self.frequency_moment(f, parameters, 2)
+        
+        sigma_f = np.sqrt(avg_f_square - avg_f**2)
+                
+        return 1 / (2 * np.pi * snr * sigma_f)
+        
 
 
 if __name__ == "__main__":
