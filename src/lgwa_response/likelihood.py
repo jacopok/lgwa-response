@@ -498,8 +498,8 @@ class LunarLikelihood:
         )
 
         detector_position = self.get_detector_position_vector(t_of_f) - self.center
-        delay_phase = (
-            np.dot(detector_position, prop_unit_vector) / SPEED_OF_LIGHT
+        delay_phase = - (
+            + np.dot(detector_position, prop_unit_vector) / SPEED_OF_LIGHT
             + parameters["time_at_center"]
         ) * (2 * np.pi * f)
 
@@ -513,7 +513,7 @@ class LunarLikelihood:
 
         amplitude[~detector_exists] = 0.0
 
-        total_phase = phase - delay_phase + parameters["phase"]
+        total_phase = + phase + delay_phase + parameters["phase"]
 
         h_plus = amplitude * 0.5 * (1 + cosiota**2) * np.exp(1j * (total_phase))
         h_cross = amplitude * cosiota * np.exp(1j * (total_phase + np.pi / 2))
@@ -718,28 +718,30 @@ if __name__ == "__main__":
     like.compute_center(t0)
 
     f = np.geomspace(1e-1, 3, num=1000)
+    print(like.t_of_f(f, parameters))
+    print(time_to_merger(f, parameters))
 
-    like.make_relbin_data(f, parameters)
+    # like.make_relbin_data(f, parameters)
 
-    masses = np.geomspace(1e-9, 1e-6, num=20) + 1.2
-    errors = np.empty_like(masses)
-    likes = np.empty_like(masses)
+    # masses = np.geomspace(1e-9, 1e-6, num=20) + 1.2
+    # errors = np.empty_like(masses)
+    # likes = np.empty_like(masses)
 
-    full_f = np.geomspace(1e-1, 3, num=10_000_000)
+    # full_f = np.geomspace(1e-1, 3, num=10_000_000)
 
-    for i, mass in tqdm(enumerate(masses)):
-        mod_parameters = parameters | {"chirp_mass": mass}
-        relbin = like.relbin_log_likelihood_ratio(mod_parameters)
-        like.data = like.projected_waveform(full_f, parameters)
-        regular = like.log_likelihood_ratio(full_f, mod_parameters)
-        errors[i] = np.abs(relbin - regular)
-        likes[i] = regular
+    # for i, mass in tqdm(enumerate(masses)):
+    #     mod_parameters = parameters | {"chirp_mass": mass}
+    #     relbin = like.relbin_log_likelihood_ratio(mod_parameters)
+    #     like.data = like.projected_waveform(full_f, parameters)
+    #     regular = like.log_likelihood_ratio(full_f, mod_parameters)
+    #     errors[i] = np.abs(relbin - regular)
+    #     likes[i] = regular
 
-    plt.loglog(masses - 2.8, errors, label="error")
-    newax = plt.gca().twinx()
-    newax.semilogx(masses - 2.8, likes, label="likes")
-    # hx, hy = like.projected_waveform(f, parameters)
-    # plt.loglog(f, abs(hx))
-    # plt.loglog(f, abs(hy))
-    plt.legend()
-    plt.show()
+    # plt.loglog(masses - 2.8, errors, label="error")
+    # newax = plt.gca().twinx()
+    # newax.semilogx(masses - 2.8, likes, label="likes")
+    # # hx, hy = like.projected_waveform(f, parameters)
+    # # plt.loglog(f, abs(hx))
+    # # plt.loglog(f, abs(hy))
+    # plt.legend()
+    # plt.show()
