@@ -22,9 +22,10 @@ DEFAULT_PARAMS = {
 
 class LunarLikelihoodBilbyInjection(LunarLikelihood, bilby.core.likelihood.Likelihood):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        
+
         self.phase_marginalization = kwargs.pop('phase_marginalization', False)
+
+        super().__init__(**kwargs)
         
         bilby.core.likelihood.Likelihood.__init__(self, parameters=DEFAULT_PARAMS)
 

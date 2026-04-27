@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from erfa import ufunc
 from numba import njit
+import yaml
 
 from . import data_path, lgwa_settings
 
@@ -104,31 +105,35 @@ def generate_data_position(
     return times.value, saved_data
 
 
-def test_interpolation_error_response(dataset_sizes):
+def test_interpolation_error_response(dataset_sizes, lgwa_position):
     rng = np.random.default_rng(seed=1)
+
+    location = MoonLocation.from_selenodetic(
+        lon=lgwa_position['longitude'], lat=lgwa_position['latitude']
+    )
 
     all_errors = []
     for n_samples in dataset_sizes:
         print(f"Trying {n_samples} samples")
 
-        times, data = generate_data_response(n_samples)
+        times, data = generate_data_response(n_samples, lgwa_position)
 
         these_errors = []
         for i in tqdm(range(1000)):
-            time = Time(rng.uniform(times.value[0], times.value[-1]), format="gps")
+            time = Time(rng.uniform(times[0], times[-1]), format="gps")
             ra = rng.uniform(0, 2 * np.pi)
             dec = np.pi / 2 - np.arccos(rng.uniform(-1, 1))
 
             true_vecs = get_orthonormal_vectors(
-                LunarTopo(obstime=time, location=LOCATION)
+                LunarTopo(obstime=time, location=location)
             )
 
             for j in [0, 2, 4]:
                 true_scalar_product = scalar_product_spherical(
                     ra, dec, true_vecs[j], true_vecs[j + 1]
                 )
-                approx_ra = np.interp(time.value, times.value, data[:, j])
-                approx_dec = np.interp(time.value, times.value, data[:, j + 1])
+                approx_ra = np.interp(time.value, times, data[:, j])
+                approx_dec = np.interp(time.value, times, data[:, j + 1])
                 approx_scalar_product = scalar_product_spherical(
                     ra, dec, approx_ra, approx_dec
                 )
@@ -138,22 +143,26 @@ def test_interpolation_error_response(dataset_sizes):
     return all_errors
 
 
-def test_interpolation_error_position(dataset_sizes):
+def test_interpolation_error_position(dataset_sizes, lgwa_position):
     rng = np.random.default_rng(seed=1)
+
+    location = MoonLocation.from_selenodetic(
+        lon=lgwa_position['longitude'], lat=lgwa_position['latitude']
+    )
 
     all_errors = []
     for n_samples in dataset_sizes:
         print(f"Trying {n_samples} samples")
 
-        times, data = generate_data_position(n_samples)
+        times, data = generate_data_position(n_samples, lgwa_position)
 
         these_errors = []
         for i in tqdm(range(1000)):
-            time = Time(rng.uniform(times.value[0], times.value[-1]), format="gps")
+            time = Time(rng.uniform(times[0], times[-1]), format="gps")
 
-            true_position = get_detector_position(time)
+            true_position = get_detector_position(time, location)
             approx_position = np.asarray(
-                [np.interp(time.value, times.value, data[:, j]) for j in range(3)]
+                [np.interp(time.value, times, data[:, j]) for j in range(3)]
             )
 
             these_errors.append(np.linalg.norm(approx_position - true_position))
@@ -163,17 +172,27 @@ def test_interpolation_error_position(dataset_sizes):
     return all_errors
 
 
-def make_response_interpolation_plot():
+def make_response_interpolation_plot(cache_path=None, lgwa_position=None):
     dataset_sizes = [1250, 2500, 5000, 10_000, 20_000]
+    
+    if cache_path is None:
+        cache_path = data_path / "cache"
+    
+    if lgwa_position is None:
+        with open((data_path / "lgwa_metadata").with_suffix(".yaml"), "r") as f:
+            lgwa_meta = yaml.safe_load(f)
+            lgwa_position = lgwa_meta
+
+    
     file_path = (
-        data_path
-        / "cache"
+        cache_path
         / f'lunar_response_interpolation_{"_".join(map(str, dataset_sizes))}.npy'
     ).with_suffix(".npy")
+    
     if file_path.exists():
         all_errors = np.load(file_path)
     else:
-        all_errors = np.asarray(test_interpolation_error_response(dataset_sizes))
+        all_errors = np.asarray(test_interpolation_error_response(dataset_sizes, lgwa_position))
         np.save(file_path, all_errors)
 
     bplot_kwargs = {
@@ -237,17 +256,26 @@ def make_response_interpolation_plot():
     plt.show()
 
 
-def make_position_interpolation_plot():
+def make_position_interpolation_plot(cache_path=None, lgwa_position=None):
     dataset_sizes = [10_000, 20_000, 40_000, 80_000, 160_000, 320_000]
+    
+    if cache_path is None:
+        cache_path = data_path / "cache"
+
+    if lgwa_position is None:
+        with open((data_path / "lgwa_metadata").with_suffix(".yaml"), "r") as f:
+            lgwa_meta = yaml.safe_load(f)
+            lgwa_position = lgwa_meta
+
+
     file_path = (
-        data_path
-        / "cache"
+        cache_path
         / f'lunar_position_interpolation_{"_".join(map(str, dataset_sizes))}.npy'
     ).with_suffix(".npy")
     if file_path.exists():
         all_errors = np.load(file_path)
     else:
-        all_errors = np.asarray(test_interpolation_error_position(dataset_sizes))
+        all_errors = np.asarray(test_interpolation_error_position(dataset_sizes, lgwa_position))
         np.save(file_path, all_errors)
 
     bplot_kwargs = {
