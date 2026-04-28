@@ -498,8 +498,8 @@ class LunarLikelihood:
         )
 
         detector_position = self.get_detector_position_vector(t_of_f) - self.center
-        delay_phase = - (
-            + np.dot(detector_position, prop_unit_vector) / SPEED_OF_LIGHT
+        delay_phase = (
+            - np.dot(detector_position, prop_unit_vector) / SPEED_OF_LIGHT
             + parameters["time_at_center"]
         ) * (2 * np.pi * f)
 
