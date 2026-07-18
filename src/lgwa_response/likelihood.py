@@ -252,7 +252,7 @@ def noise_weighted_inner_product(aa, bb, power_spectral_density, frequencies):
     """
 
     integrand = np.conj(aa) * bb / power_spectral_density
-    return 4 * trapezoid(integrand, x=frequencies).real
+    return 4 * trapezoid(integrand, x=frequencies)
 
 
 class LunarLikelihood:
@@ -315,6 +315,7 @@ class LunarLikelihood:
 
         self.ensure_ephemeris_are_available()
         self.center = np.asarray([0, 0, 0])[np.newaxis, :]
+        self.reference_frequency = np.inf
         self.detector_lifetime = detector_lifetime
 
         self.data = None
@@ -484,14 +485,22 @@ class LunarLikelihood:
 
         return time_to_merger(f, phase) + parameters["time_at_center"] + t_baseline
 
-    def projected_waveform(self, f, parameters, parameters_for_amp_phase=None):
+    def projected_waveform(self, f, parameters, parameters_for_amp_phase=None, compare_contributions=False):
         if parameters_for_amp_phase is None:
             parameters_for_amp_phase = parameters
         amplitude, phase = self.amp_phase(f, parameters_for_amp_phase)
 
         t_baseline = parameters.get("time_at_center_baseline", 0.0)
 
-        t_of_f = time_to_merger(f, phase) + parameters["time_at_center"] + t_baseline
+        if self.reference_frequency == np.inf:
+            reference_delay = 0.
+        else:
+            # negative reference_delay
+            reference_delay = time_to_merger(self.reference_frequency, phase)
+
+        t_merger = parameters["time_at_center"] - reference_delay
+
+        t_of_f = time_to_merger(f, phase) + t_merger + t_baseline
 
         prop_unit_vector = -spherical_to_cartesian(
             parameters["right_ascension"], parameters["declination"]
@@ -500,11 +509,11 @@ class LunarLikelihood:
         detector_position = self.get_detector_position_vector(t_of_f) - self.center
         delay_phase = (
             - np.dot(detector_position, prop_unit_vector) / SPEED_OF_LIGHT
-            + parameters["time_at_center"]
+            + t_merger
         ) * (2 * np.pi * f)
 
         detector_exists = t_of_f > (
-            parameters["time_at_center"] + t_baseline - self.detector_lifetime
+            t_merger + t_baseline - self.detector_lifetime
         )
 
         logging.info(f"Detector exists from f >= {f[detector_exists][0]}")
@@ -527,6 +536,14 @@ class LunarLikelihood:
 
         h_x = h_plus * hpx + h_cross * hcx
         h_y = h_plus * hpy + h_cross * hcy
+        
+        if compare_contributions:
+            hpx_mod = noise_weighted_inner_product(h_plus * hpx, h_plus * hpx, self.psd(f), f)
+            hcx_mod = noise_weighted_inner_product(h_cross * hcx, h_cross * hcx, self.psd(f), f)
+            hpy_mod = noise_weighted_inner_product(h_plus * hpy, h_plus * hpy, self.psd(f), f)
+            hcy_mod = noise_weighted_inner_product(h_cross * hcy, h_cross * hcy, self.psd(f), f)
+            
+            return (hpx_mod, hcx_mod, hpy_mod, hcy_mod)
 
         # returns shape (n_channels, n_frequencies)
         return np.vstack((h_x, h_y))
@@ -541,10 +558,10 @@ class LunarLikelihood:
         psd = self.psd(f)
 
         return (
-            +noise_weighted_inner_product(hx, dx, psd, f)
-            + noise_weighted_inner_product(hy, dy, psd, f)
-            - 0.5 * noise_weighted_inner_product(hx, hx, psd, f)
-            - 0.5 * noise_weighted_inner_product(hy, hy, psd, f)
+            +noise_weighted_inner_product(hx, dx, psd, f).real
+            + noise_weighted_inner_product(hy, dy, psd, f).real
+            - 0.5 * noise_weighted_inner_product(hx, hx, psd, f).real
+            - 0.5 * noise_weighted_inner_product(hy, hy, psd, f).real
         )
 
     @property
@@ -565,14 +582,14 @@ class LunarLikelihood:
 
         assert np.all(self.h0_bin != 0.0)
 
-    def make_relbin_data(self, frequency_grid, parameters_h0, n_local_grid=2**10):
+    def make_relbin_data(self, frequency_grid, parameters_h0, n_local_grid=2**10, noisy=False, seed=None, cache=True):
         meta_dict = parameters_h0 | {
             "n_freqs": len(frequency_grid),
             "f_min": float(min(frequency_grid)),
             "f_max": float(max(frequency_grid)),
         }
 
-        if self.log_dir is not None:
+        if self.log_dir is not None and cache:
             fname_data = self.log_dir / "relbin_data.npy"
             fname_meta = self.log_dir / "relbin_metadata.yaml"
 
@@ -586,7 +603,7 @@ class LunarLikelihood:
             else:
                 parameters_are_identical = False
 
-            if parameters_are_identical:
+            if parameters_are_identical and fname_data.exists():
                 self.relbin_summary_data = np.load(fname_data)
                 self.set_reference_waveform(frequency_grid, parameters_h0)
 
@@ -599,7 +616,10 @@ class LunarLikelihood:
 
         self.set_reference_waveform(frequency_grid, parameters_h0)
 
-        self.relbin_summary_data = np.empty((2, self.n_bins, 4))
+        self.relbin_summary_data = np.empty((2, self.n_bins, 4), dtype=np.complex128)
+        
+        if noisy:
+            rng = np.random.default_rng(seed=seed)
 
         for i, (f_left, f_right) in tqdm(
             enumerate(zip(self.relbin_frequencies[:-1], self.relbin_frequencies[1:])),
@@ -610,22 +630,41 @@ class LunarLikelihood:
             local_psd = self.psd(local_grid)
             local_h0 = self.projected_waveform(local_grid, parameters_h0)
             for channel in range(2):
-                A0 = noise_weighted_inner_product(
+                B0 = noise_weighted_inner_product(
                     local_h0[channel], local_h0[channel], local_psd, local_grid
                 )
-                A1 = noise_weighted_inner_product(
+                B1 = noise_weighted_inner_product(
                     local_h0[channel],
                     local_h0[channel] * (local_grid - f_avg),
                     local_psd,
                     local_grid,
                 )
+                if noisy:
+                    B2 = noise_weighted_inner_product(
+                        local_h0[channel],
+                        local_h0[channel] * (local_grid - f_avg)**2,
+                        local_psd,
+                        local_grid,
+                    )
+                    
+                    cov = np.array([[B0, B1], [B1, B2]]).real
+                    
+                    deltas = rng.multivariate_normal(mean=np.zeros(2), cov=cov)
+                    
+                    A0 = B0 + deltas[0] * np.exp(1j*rng.uniform(0, 2*np.pi))
+                    A1 = B1 + deltas[1] * np.exp(1j*rng.uniform(0, 2*np.pi))
+                    
+                else:
+                    A0 = B0
+                    A1 = B1
 
                 self.relbin_summary_data[channel, i, 0] = A0
                 self.relbin_summary_data[channel, i, 1] = A1
-                self.relbin_summary_data[channel, i, 2] = A0
-                self.relbin_summary_data[channel, i, 3] = A1
+                self.relbin_summary_data[channel, i, 2] = B0
+                self.relbin_summary_data[channel, i, 3] = B1
 
-        np.save(fname_data, self.relbin_summary_data)
+        if cache:
+            np.save(fname_data, self.relbin_summary_data)
 
     def relbin_log_likelihood_ratio(self, parameters):
         f_bin = self.relbin_frequencies
@@ -670,17 +709,17 @@ class LunarLikelihood:
 
     def optimal_snr(self, f, parameters):
         h = self.projected_waveform(f, parameters)
-        return np.sqrt(noise_weighted_inner_product(h, h, self.psd(f), f).sum())
+        return np.sqrt(noise_weighted_inner_product(h, h, self.psd(f), f).real.sum())
 
     def mean_square_frequency_snr(self, f, parameters):
         h = self.projected_waveform(f, parameters)
-        return noise_weighted_inner_product(h*f, h*f, self.psd(f), f).sum()
+        return noise_weighted_inner_product(h*f, h*f, self.psd(f), f).real.sum()
     
     def frequency_moment(self, f, parameters, order=1):
         h = self.projected_waveform(f, parameters)
-        norm = noise_weighted_inner_product(h, h, self.psd(f), f).sum()
+        norm = noise_weighted_inner_product(h, h, self.psd(f), f).real.sum()
         
-        return noise_weighted_inner_product(h, h*f**order, self.psd(f), f).sum() / norm
+        return noise_weighted_inner_product(h, h*f**order, self.psd(f), f).real.sum() / norm
 
     def expected_timing_uncertainty(self, f, parameters):
         h = self.projected_waveform(f, parameters)
@@ -691,8 +730,9 @@ class LunarLikelihood:
         sigma_f = np.sqrt(avg_f_square - avg_f**2)
                 
         return 1 / (2 * np.pi * snr * sigma_f)
-        
+    
 
+        
 
 if __name__ == "__main__":
     like = LunarLikelihood()

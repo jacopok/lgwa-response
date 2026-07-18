@@ -2,6 +2,7 @@ import numpy as np
 from lgwa_response.simple_waveforms import from_bilby
 from lgwa_response.likelihood import LunarLikelihood
 from lgwa_response.add_relbin_samples import LunarLikelihoodAddingSamples
+from lgwa_response.bilby_interface import LunarLikelihoodBilbyInjection
 import pytest
 
 
@@ -192,3 +193,9 @@ def test_likelihood_different_position():
             },
         gps_time_range=(1e9, 1e9+1e6),
     )
+
+def test_phase_marginalized_likelihood(injection):
+    like1 = LunarLikelihoodBilbyInjection(phase_marginalization=True)
+    like2 = LunarLikelihoodBilbyInjection(phase_marginalization=False)
+    
+    # nlike1.make_relbin_data()
